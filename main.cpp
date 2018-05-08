@@ -1,29 +1,52 @@
 #include <iostream>
 using namespace std;
 
-#define MAX_SIZE 10000
+class Node;
+
 template<class T>
 class queue{
 private:
     T *a;
-    int first, last, count;
+    int first, last, count, capacity;
+    bool full(){
+        return count == capacity;
+    }
+    void expand(){
+        int c = capacity * 2;
+        auto *temp = new T[c]();
+        int temp_c = count;
+        int i = 0;
+        while (!empty()){
+            temp[i++] = front();
+            pop();
+        }
+        T* s = a;
+        a = new T[c]();
+        a = temp;
+        temp = s;
+        delete[] temp;
+        first = 0;
+        last = i;
+        count = temp_c;
+        capacity = c;
+    }
 public:
-    queue(){
-        a = new T[MAX_SIZE];
-        first = last = count = 0;
-    }
-    ~queue(){
-        delete[] a;
-    }
     bool empty(){
         return count == 0;
     }
+    queue(){
+        capacity = 10;
+        a = new T[capacity]();
+        first = last = count = 0;
+    }
     void push(T item){
+        if (full())
+            expand();
         if (last != first || count == 0) {
             a[last] = item;
             count++;
         }
-        if (last == MAX_SIZE - 1)
+        if (last == capacity - 1)
             last = 0;
         else
             last++;
@@ -32,7 +55,7 @@ public:
         if (!empty()) {
             a[first].~T();
             count--;
-            if (first == MAX_SIZE - 1)
+            if (first == capacity - 1)
                 first = 0;
             else
                 first++;
@@ -42,11 +65,40 @@ public:
         return a[first];
     }
 };
+template <>
+void queue<Node*>::pop(){
+    if (!empty()) {
+        a[first] = nullptr;
+        count--;
+        if (first == capacity - 1)
+            first = 0;
+        else
+            first++;
+    }
+}
+template <>
+void queue<int>::pop(){
+    if (!empty()) {
+        a[first] = 0;
+        count--;
+        if (first == capacity - 1)
+            first = 0;
+        else
+            first++;
+    }
+}
 
 class Node {
 public:
-    Node(int value = 0){
+    explicit Node(int value = 0){
         data = value;
+        left = nullptr;
+        down = nullptr;
+        right = nullptr;
+        up = nullptr;
+    }
+    ~Node(){
+        data = 0;
         left = nullptr;
         down = nullptr;
         right = nullptr;
@@ -117,11 +169,16 @@ public:
         Node *current = root;
         while (current){
             visit(current);
-            if (current->left != nullptr) q.push(current->left);
-            if (current->down != nullptr) q.push(current->down);
-            if (current->right != nullptr) q.push(current->right);
-            if (current->up != nullptr) q.push(current->up);
-            if (q.empty()) return;
+            if (current->left != nullptr)
+                q.push(current->left);
+            if (current->down != nullptr)
+                q.push(current->down);
+            if (current->right != nullptr)
+                q.push(current->right);
+            if (current->up != nullptr)
+                q.push(current->up);
+            if (q.empty())
+                return;
             current = q.front();
             q.pop();
         }
@@ -152,16 +209,14 @@ int main() {
         if (matrix[start_y][start_x] != 0) {
             tree.root = makeTree(matrix, tree.root, start_x, start_y, 0);
 
-            if (command == "Pre-order-traversal") {
+            if (command == "Pre-order-traversal")
                 tree.preOrder(tree.root);
-                tree.print();
-            } else if (command == "Post-order-traversal") {
+            else if (command == "Post-order-traversal")
                 tree.postOrder(tree.root);
-                tree.print();
-            } else if (command == "Level-order-traversal") {
+            else if (command == "Level-order-traversal")
                 tree.levelOrder();
-                tree.print();
-            }
+
+            tree.print();
         }
     }
 
